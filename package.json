@@ -1,0 +1,29 @@
+{
+  "name": "3to4",
+  "version": "1.0.0",
+  "description": "Migrate Intern 3 projects to Intern 4",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node _build/src/config.js tests/intern.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theintern/3to4.git"
+  },
+  "keywords": [
+    "intern",
+    "javascript",
+    "testing",
+    "typescript"
+  ],
+  "author": "",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/theintern/3to4/issues"
+  },
+  "homepage": "https://github.com/theintern/3to4#readme",
+  "dependencies": {
+    "intern": "~3.4.5"
+  }
+}
