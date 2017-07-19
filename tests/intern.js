@@ -49,5 +49,19 @@ define({
 
 	// A regular expression matching URLs to files that should not be included in code coverage analysis. Set to `true`
 	// to completely disable code coverage.
-	excludeInstrumentation: /^(?:tests|node_modules)\//
+	excludeInstrumentation: /^(?:tests|node_modules)\//,
+
+	reporters: [
+		'Console',
+		{ id: 'LcovHtml', dirname: 'coverage' },
+		{ id: 'Lcov', filename: 'lcov.info' },
+		{ id: 'Lcover', filename: 'lcov.info' },
+		{ id: 'tests/support/Custom', filename: 'lcov.info' }
+	],
+
+	foo: 'bar',
+
+	before: function () {
+		console.log('do stuff');
+	}
 });

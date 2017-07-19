@@ -1,55 +1,32 @@
 import * as loader from 'dojo/loader';
 import { writeFileSync } from 'fs';
 import { basename } from 'path';
+import { red, yellow } from 'chalk';
 
-function unsupported(property: string) {
-	console.warn(`WARNING: The property '${property}' is unknown or has been deprecated.`);
+interface DeprecationMessage {
+	property: string;
+	message: string;
 }
 
-function addReporter(config: any, reporter: string | { [key: string]: any }) {
-	let plugin: any;
-	let entry: { name?: string, options?: any | undefined } = {};
-
-	if (typeof reporter === 'string') {
-		if (reporter.indexOf('/') !== -1) {
-			plugin = reporter;
-			entry.name = basename(reporter);
-			console.warn(`WARNING: Reporter ${reporter} should be rewritten as an Intern 4 reporter ` +
-				'plugin and registered using intern.registerReporter.');
-		}
-		else {
-			entry.name = reporter;
-		}
-	}
-	else {
-		const id: string = reporter.id;
-		entry.options = JSON.parse(JSON.stringify(reporter));
-		delete entry.options.id;
-
-		if (id.indexOf('/') !== -1) {
-			plugin = id;
-			entry.name = basename(id);
-			console.warn(`WARNING: Reporter ${id} should be rewritten as an Intern 4 reporter ` +
-				'plugin and registered using intern.registerReporter.');
-		}
-		else {
-			entry.name = id;
-		}
-	}
-
-	if (plugin) {
-		config.plugins = config.plugins || [];
-		config.plugins.push(plugin);
-	}
-	config.reporters.push(entry);
-}
-
+const messages: { type: string; data: any }[] = [];
+const reporters: { [name: string]: string } = {
+	Benchmark: 'benchmark',
+	Cobertura: 'cobertura',
+	Console: 'console',
+	Html: 'html',
+	JUnit: 'junit',
+	JsonCoverage: 'jsoncoverage',
+	Lcov: 'lcov',
+	LcovHtml: 'htmlcoverage',
+	Pretty: 'pretty',
+	Runner: 'runner',
+	TeamCity: 'teamcity',
+	WebDriver: 'dom'
+};
 const dojoLoader: loader.IRequire = <any>loader;
 const internConfig = {
 	baseUrl: process.cwd().replace(/\\/g, '/'),
-	packages: [
-		{ name: 'intern', location: 'node_modules/intern' }
-	],
+	packages: [{ name: 'intern', location: 'node_modules/intern' }],
 	map: {
 		intern: {
 			dojo: 'intern/browser_modules/dojo',
@@ -98,14 +75,14 @@ if (args.length < 1) {
 const config = args[0];
 const output = args[1];
 
-dojoLoader([ config ], async function (oldConfig) {
+dojoLoader([config], async function(oldConfig) {
 	const newConfig: { [key: string]: any } = {
 		loader: {
 			script: 'dojo'
 		}
 	};
 
-	let loaders: { [ key: string]: any } = {};
+	let loaders: { [key: string]: any } = {};
 
 	Object.keys(oldConfig).forEach(key => {
 		const converter = converters[key] || ((value: any) => value);
@@ -128,6 +105,18 @@ dojoLoader([ config ], async function (oldConfig) {
 			case 'suites':
 			case 'tunnel':
 				newConfig[key] = value;
+				break;
+
+			case 'before':
+			case 'after':
+				// TODO: Possibly create plugins
+				deprecated(
+					key,
+					`Please add this code to a '${key}Run' hook in a plugin and add the plugin to the 'plugins'\n` +
+						`property in the generated config.\n` +
+						'See https://github.com/theintern/intern/blob/master/docs/how_to.md#run-code-before-tests-start.'
+				);
+				newConfig.plugins = newConfig.plugins || [];
 				break;
 
 			case 'benchmarkSuites':
@@ -178,15 +167,25 @@ dojoLoader([ config ], async function (oldConfig) {
 				});
 				break;
 
+			case 'runnerClientReporter':
+				deprecated(
+					key,
+					'The reporter used by WebDriver remotes is no longer configurable'
+				);
+				break;
+
 			default:
-				unsupported(key);
+				unsupportedProperty(key);
 				break;
 		}
 	});
 
 	if (newConfig.loader.options) {
+		// If the config uses environment-specific loaders, copy the loader
+		// options into the environment-specific loader properties since those
+		// will override the top-level loader property.
 		if (loaders.node || loaders.browser) {
-			[ 'node', 'browser' ].filter(env => loaders[env]).forEach(env => {
+			['node', 'browser'].filter(env => loaders[env]).forEach(env => {
 				newConfig[env] = newConfig[env] || {};
 				newConfig[env].loader.options = newConfig.loader.options;
 			});
@@ -196,8 +195,131 @@ dojoLoader([ config ], async function (oldConfig) {
 	const newConfigString = JSON.stringify(newConfig, null, '    ');
 	if (output) {
 		writeFileSync(output, newConfigString);
-	}
-	else {
+	} else {
 		console.log(newConfigString);
 	}
+
+	messages
+		.filter(entry => entry.type === 'warning')
+		.map(entry => entry.data)
+		.forEach((message: string) => {
+			printWarning(`${message}\n`);
+		});
+
+	messages
+		.filter(entry => entry.type === 'deprecated')
+		.map(entry => entry.data)
+		.forEach((info: DeprecationMessage) => {
+			printWarning(
+				`WARNING: The property '${info.property}' is deprecated.`
+			);
+			if (info.message) {
+				printWarning(`${info.message}\n`);
+			} else {
+				printWarning('');
+			}
+		});
+
+	messages
+		.filter(entry => entry.type === 'unsupportedProperty')
+		.map(entry => entry.data)
+		.forEach((prop: string) => {
+			printWarning(`WARNING: The property '${prop}' is unknown.\n`);
+		});
+
+	const legacyReporters = messages
+		.filter(entry => entry.type === 'legacyReporter')
+		.map(entry => <string>entry.data);
+	if (legacyReporters.length > 0) {
+		// TODO: Update this to a more useful URL when one exists
+		printWarning(
+			'WARNING: The following legacy reporters should be rewritten as Intern 4 reporters and\n' +
+				`loaded loaded using the 'plugins' config property.\n` +
+				'See https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
+		);
+		legacyReporters.forEach(reporter => {
+			printWarning(`  * ${reporter}`);
+		});
+		printWarning('');
+	}
+
+	messages
+		.filter(entry => entry.type === 'error')
+		.map(entry => entry.data)
+		.forEach((error: string) => {
+			printError(red(`ERROR: ${error}\n`));
+		});
 });
+
+// ---------------------------------------------------------------------
+// General utilities
+
+function printError(message: string) {
+	console.error(red(message));
+}
+
+function printWarning(message: string) {
+	console.warn(yellow(message));
+}
+
+// Messages
+
+function error(message: string) {
+	messages.push({ type: 'error', data: message });
+}
+
+function unsupportedProperty(property: string) {
+	messages.push({ type: 'unsupportedProperty', data: property });
+}
+
+function deprecated(property: string, message?: string) {
+	messages.push({ type: 'deprecated', data: { property, message } });
+}
+
+function legacyReporter(reporter: string) {
+	messages.push({ type: 'legacyReporter', data: reporter });
+}
+
+// Reporters
+
+function convertReporterName(name: string) {
+	const reporter = reporters[name];
+	if (!reporter) {
+		error(`Unknown reporter '${name}'`);
+	}
+	return reporter;
+}
+
+function addReporter(config: any, reporter: string | { [key: string]: any }) {
+	let plugin: any;
+	let entry: { name?: string; options?: any | undefined } = {};
+
+	if (typeof reporter === 'string') {
+		if (reporter.indexOf('/') !== -1) {
+			plugin = reporter;
+			entry.name = basename(reporter);
+			legacyReporter(reporter);
+		} else {
+			entry.name = convertReporterName(reporter);
+		}
+	} else {
+		const id: string = reporter.id;
+		entry.options = JSON.parse(JSON.stringify(reporter));
+		delete entry.options.id;
+
+		if (id.indexOf('/') !== -1) {
+			plugin = id;
+			entry.name = basename(id);
+			legacyReporter(id);
+		} else {
+			entry.name = convertReporterName(id);
+		}
+	}
+
+	if (plugin) {
+		config.plugins = config.plugins || [];
+		config.plugins.push(plugin);
+	}
+
+	config.reporters.push(entry);
+}
