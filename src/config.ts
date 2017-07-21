@@ -1,5 +1,5 @@
 import * as loader from 'dojo/loader';
-import { writeFileSync } from 'fs';
+import { createWriteStream } from 'fs';
 import { basename } from 'path';
 import { red, yellow } from 'chalk';
 
@@ -73,7 +73,11 @@ if (args.length < 1) {
 }
 
 const config = args[0];
-const output = args[1];
+
+let output = process.stdout;
+if (args[1]) {
+	output = createWriteStream(args[1], { flags: 'w' });
+}
 
 dojoLoader([config], async function(oldConfig) {
 	const newConfig: { [key: string]: any } = {
@@ -112,7 +116,7 @@ dojoLoader([config], async function(oldConfig) {
 				// TODO: Possibly create plugins
 				deprecated(
 					key,
-					`Please add this code to a '${key}Run' hook in a plugin and add the plugin to the 'plugins'\n` +
+					`Please add the 'before' callback to a '${key}Run' hook in a plugin and add the plugin to the 'plugins'\n` +
 						`property in the generated config.\n` +
 						'See https://github.com/theintern/intern/blob/master/docs/how_to.md#run-code-before-tests-start.'
 				);
@@ -193,10 +197,9 @@ dojoLoader([config], async function(oldConfig) {
 	}
 
 	const newConfigString = JSON.stringify(newConfig, null, '    ');
-	if (output) {
-		writeFileSync(output, newConfigString);
-	} else {
-		console.log(newConfigString);
+	output.write(`${newConfigString}\n`);
+	if (output !== process.stdout) {
+		output.end();
 	}
 
 	messages
@@ -234,8 +237,8 @@ dojoLoader([config], async function(oldConfig) {
 		// TODO: Update this to a more useful URL when one exists
 		printWarning(
 			'WARNING: The following legacy reporters should be rewritten as Intern 4 reporters and\n' +
-				`loaded loaded using the 'plugins' config property.\n` +
-				'See https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
+				`loaded loaded using the 'plugins' config property. See\n` +
+				'https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
 		);
 		legacyReporters.forEach(reporter => {
 			printWarning(`  * ${reporter}`);
