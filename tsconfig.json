@@ -3,15 +3,6 @@
 		"allowSyntheticDefaultImports": true,
 		"declaration": true,
 		"experimentalDecorators": true,
-		"lib": [
-			"es5",
-			"es2015.promise",
-			"es2015.collection",
-			"es2015.symbol",
-			"es2015.symbol.wellknown",
-			"es2015.iterable",
-			"dom"
-		],
 		"module": "umd",
 		"moduleResolution": "node",
 		"noUnusedLocals": true,
@@ -22,7 +13,7 @@
 		"rootDir": ".",
 		"sourceMap": true,
 		"strict": true,
-		"target": "es5"
+		"target": "es2015"
 	},
 	"include": [
 		"src/*.ts",

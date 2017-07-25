@@ -38,11 +38,13 @@ define({
 	// <https://theintern.github.io/intern/#option-useLoader> for more information.
 	loaderOptions: {
 		// Packages that should be registered with the loader in each testing environment
-		packages: [ { name: 'myPackage', location: '.' } ]
+		packages: [ { name: 'app', location: '.' } ]
 	},
 
 	// Unit test suite(s) to run in each browser
-	suites: [ /* 'myPackage/tests/foo', 'myPackage/tests/bar' */ ],
+	suites: [
+		'app/tests/unit/*'
+	],
 
 	// Functional test suite(s) to execute against each browser once unit tests are completed
 	functionalSuites: [ /* 'myPackage/tests/functional' */ ],
