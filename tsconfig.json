@@ -13,10 +13,18 @@
 		"rootDir": ".",
 		"sourceMap": true,
 		"strict": true,
-		"target": "es2015"
+		"target": "es2015",
+        "typeRoots": [
+            "node_modules/@types",
+            "node_modules/intern/types",
+            "types"
+        ],
+        "types": [
+            "intern",
+            "dojo"
+        ]
 	},
 	"include": [
-		"src/*.ts",
-        "node_modules/intern/typings/dojo2/dojo.d.ts"
+		"src/**/*.ts"
 	]
 }

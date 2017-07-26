@@ -2,9 +2,11 @@
     "name": "3to4",
     "version": "1.0.0",
     "description": "Migrate Intern 3 projects to Intern 4",
-    "main": "index.js",
+    "main": "compat/index.js",
+    "bin": "3to4.js",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc && shx cp package.json _build/src",
+        "clean": "shx rm -rf _build",
         "test": "node _build/src/convert.js tests/intern.js"
     },
     "repository": {
@@ -25,11 +27,17 @@
     "homepage": "https://github.com/theintern/3to4#readme",
     "dependencies": {
         "chalk": "~2.0.1",
-        "intern": "~3.4.5",
+        "cpx": "~1.5.0",
+        "dojo": "2.0.0-alpha.7",
         "wrap-ansi": "~3.0.1"
     },
     "devDependencies": {
         "@types/chalk": "~0.4.31",
-        "@types/wrap-ansi": "~2.0.14"
+        "@types/wrap-ansi": "~2.0.14",
+        "intern": "~4.0.0-alpha.12",
+        "shx": "~0.2.2"
+    },
+    "peerDependency": {
+        "intern": "~4.0.0-alpha.12"
     }
 }
