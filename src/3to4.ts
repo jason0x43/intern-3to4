@@ -3,20 +3,23 @@
 import { createWriteStream } from 'fs';
 import { red, yellow } from 'chalk';
 import * as wrapAnsi from 'wrap-ansi';
-import { basename } from 'path';
+import { basename, dirname, relative } from 'path';
 import * as loader from 'dojo/loader';
 
 const args = process.argv.slice(2);
 
 if (args.length < 1) {
-	console.log(`usage: ${basename(process.argv[1])} CONFIG.JS [ OUTPUT.JSON ]`);
+	console.log(
+		`usage: ${basename(process.argv[1])} CONFIG.JS [ OUTPUT.JSON ]`
+	);
 	process.exit(1);
 }
 
+const cwd = process.cwd();
 const messages: Message[] = [];
 const dojoLoader: loader.IRequire = <any>loader;
 const internConfig = {
-	baseUrl: process.cwd().replace(/\\/g, '/'),
+	baseUrl: cwd.replace(/\\/g, '/'),
 	packages: [{ name: 'intern', location: 'node_modules/intern' }],
 	map: {
 		intern: {
@@ -55,8 +58,16 @@ const converters: { [key: string]: (value: any) => any } = {
 		return value;
 	},
 
+	functionalSuites(suites: string[]) {
+		return resolveModuleIds(suites);
+	},
+
 	grep(value: RegExp) {
 		return value.source;
+	},
+
+	suites(suites: string[]) {
+		return resolveModuleIds(suites);
 	},
 
 	tunnel(value: string) {
@@ -65,14 +76,6 @@ const converters: { [key: string]: (value: any) => any } = {
 			value = match[1];
 		}
 		return value.toLowerCase();
-	},
-
-	suites(suites: string[]) {
-		for (let suite of suites) {
-			const path = dojoLoader.toAbsMid(suite);
-			console.log(`path for ${suite}: ${path}`);
-		}
-		return suites;
 	}
 };
 
@@ -92,55 +95,52 @@ dojoLoader(internConfig);
 
 (async () => {
 	try {
-		const config = await convert(dojoLoader, args[0]);
+		const config = await convert(args[0]);
 		const configString = JSON.stringify(config, null, '    ');
 		stdout.write(`${configString}\n`);
 	} catch (error) {
 		log('error', error);
 	}
 
-	writeText(
-		messages
-			.filter(message => message.type === 'warning')
-			.map(message => message.data)
-			.reduce((text: string, message: string) => {
-				return text + `${message}\n`;
-			}, '')
-	);
+	messages
+		.filter(message => message.type === 'warning')
+		.map(message => message.data)
+		.forEach(message => {
+			print(
+				`[${message.time.toISOString()}] ` +
+					`${yellow('WARNING')} ${message}\n`
+			);
+		});
 
-	writeText(
-		messages
-			.filter(message => message.type === 'deprecated')
-			.reduce((text: string, message: any) => {
-				const info = <DeprecationMessage>message.data;
-				text += `[${message.time.toISOString()}] `;
-				text += `${yellow(
-					'WARNING'
-				)} The property '${info.property}' is deprecated. `;
-				if (info.message) {
-					text += info.message;
-				}
-				return `${text}\n`;
-			}, '')
-	);
+	messages
+		.filter(message => message.type === 'deprecated')
+		.forEach(message => {
+			const info = <DeprecationMessage>message.data;
+			print(
+				`[${message.time.toISOString()}] ` +
+					`${yellow(
+						'WARNING'
+					)} The property '${info.property}' is deprecated. ` +
+					`${info.message || ''}\n`
+			);
+		});
 
-	writeText(
-		messages
-			.filter(message => message.type === 'unsupportedProperty')
-			.reduce((text: string, message: any) => {
-				text += `[${message.time.toISOString()}] `;
-				text += `${yellow(
-					'WARNING'
-				)} The property '${message.data}' is unknown.\n`;
-				return text;
-			}, '')
-	);
+	messages
+		.filter(message => message.type === 'unsupportedProperty')
+		.forEach(message => {
+			print(
+				`[${message.time.toISOString()}] ` +
+					`${yellow(
+						'WARNING'
+					)} The property '${message.data}' is unknown.\n`
+			);
+		});
 
 	const legacyReporters = messages.filter(
 		message => message.type === 'legacyReporter'
 	);
 	if (legacyReporters.length > 0) {
-		writeText(
+		print(
 			`[${legacyReporters[0].time.toISOString()}] ` +
 				`${yellow(
 					'WARNING'
@@ -149,25 +149,21 @@ dojoLoader(internConfig);
 				'https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
 		);
 		legacyReporters.forEach(reporter => {
-			writeText(`  * ${reporter.data}\n`);
+			print(`  * ${reporter.data}\n`);
 		});
 	}
 
-	writeText(
-		messages
-			.filter(message => message.type === 'error')
-			.reduce((text: string, message: any) => {
-				const error = message.data;
-				text += `[${message.time.toISOString()}] `;
-				text += `${red('ERROR')} ${error}`;
-				if (error instanceof Error && error.stack) {
-					error.stack.split('\n').slice(1).forEach(line => {
-						text += `${line}\n`;
-					});
-				}
-				return `${text}\n`;
-			}, '')
-	);
+	messages.filter(message => message.type === 'error').forEach(message => {
+		const error = message.data;
+		print(
+			`[${message.time.toISOString()}] ` + `${red('ERROR')} ${error}\n`
+		);
+		if (error instanceof Error && error.stack) {
+			error.stack.split('\n').slice(1).forEach(line => {
+				print(`${line}\n`);
+			});
+		}
+	});
 
 	if (stdout !== process.stdout) {
 		stdout.end();
@@ -234,14 +230,20 @@ function convertReporterName(name: string) {
 	return reporter;
 }
 
-function convert(loader: loader.IRequire, config: string): PromiseLike<any> {
+function convert(configFile: string): PromiseLike<any> {
 	return new Promise(resolve => {
-		loader([config], async function(oldConfig) {
+		dojoLoader([configFile], async function(oldConfig) {
 			const newConfig: { [key: string]: any } = {
 				loader: {
 					script: 'node_modules/3to4/loader.js'
 				}
 			};
+
+			// If there are loader options, configure the loader with them so
+			// suite resolution will work
+			if (oldConfig.loaderOptions) {
+				dojoLoader(oldConfig.loaderOptions);
+			}
 
 			let loaders: { [key: string]: any } = {};
 
@@ -258,7 +260,6 @@ function convert(loader: loader.IRequire, config: string): PromiseLike<any> {
 					case 'capabilities':
 					case 'defaultTimeout':
 					case 'environments':
-					case 'excludeInstrumentation':
 					case 'filterErrorStack':
 					case 'functionalSuites':
 					case 'grep':
@@ -268,13 +269,24 @@ function convert(loader: loader.IRequire, config: string): PromiseLike<any> {
 						newConfig[key] = value;
 						break;
 
+					case 'excludeInstrumentation':
+						deprecated(
+							key,
+							`Please update your config to use the 'coverage' ` +
+								'property. See ' +
+								'https://github.com/theintern/intern/blob/master/docs/configuration.md#coverage.'
+						);
+						newConfig[key] = value;
+						break;
+
 					case 'before':
 					case 'after':
 						// TODO: Possibly create plugins
 						deprecated(
 							key,
-							`Please add the 'before' callback to a '${key}Run' hook in a plugin and add the plugin to the 'plugins' ` +
-								'property in the generated config. See ' +
+							`Please add the 'before' callback to a '${key}Run' ` +
+								'hook in a plugin and add the plugin to the ' +
+								`'plugins' property in the generated config. See ` +
 								'https://github.com/theintern/intern/blob/master/docs/how_to.md#run-code-before-tests-start.'
 						);
 						newConfig.plugins = newConfig.plugins || [];
@@ -341,6 +353,40 @@ function convert(loader: loader.IRequire, config: string): PromiseLike<any> {
 				}
 			});
 
+			// Add the compat intern package to loader options
+			if (!newConfig.loader.options) {
+				newConfig.loader.options = {};
+			}
+			const loaderOptions = newConfig.loader.options;
+
+			if (!loaderOptions.packages) {
+				loaderOptions.packages = [];
+			}
+			addPackage(loaderOptions.packages, {
+				name: 'intern',
+				location: relative(cwd, dirname(require.resolve(__dirname))),
+				main: 'index.js'
+			});
+
+			const chai = require.resolve('chai');
+			addPackage(loaderOptions.packages, {
+				name: 'chai',
+				location: relative(cwd, dirname(chai)),
+				main: 'chai.js'
+			});
+
+			if (!loaderOptions.map) {
+				loaderOptions.map = {};
+			}
+			const loaderMap = loaderOptions.map;
+			if (!loaderMap['*']) {
+				loaderMap['*'] = {};
+			}
+			loaderMap['*']['@dojo'] = relative(cwd, dirname(dirname(require.resolve('@dojo/core'))));
+			loaderMap['intern/interfaces'] = {
+				intern: relative(cwd, dirname(require.resolve('intern')))
+			};
+
 			if (newConfig.loader.options) {
 				// If the config uses environment-specific loaders, copy the loader
 				// options into the environment-specific loader properties since those
@@ -361,6 +407,22 @@ function convert(loader: loader.IRequire, config: string): PromiseLike<any> {
 	});
 }
 
+function addPackage(
+	packages: { [key: string]: any }[],
+	pkg: { [key: string]: any }
+) {
+	let entry = packages.find(
+		(entry: { [key: string]: any }) => entry.name === pkg.name
+	);
+	if (entry) {
+		Object.keys(pkg).forEach(key => {
+			entry![key] = pkg[key];
+		});
+	} else {
+		packages.push(pkg);
+	}
+}
+
 function deprecated(property: string, message?: string) {
 	log('deprecated', { property, message });
 }
@@ -377,13 +439,44 @@ function log(type: string, data: any) {
 	messages.push({ time: new Date(), type, data });
 }
 
-function unsupportedProperty(property: string) {
-	log('unsupportedProperty', property);
-}
-
-function writeText(text: string) {
+function print(text: string) {
 	if (columns) {
-		text = wrapAnsi(text, Math.min(80, columns - 4), <any>{ trim: false });
+		text = wrapAnsi(text, columns - 10, <any>{ trim: false });
 	}
 	stderr.write(text);
+}
+
+function resolveModuleIds(moduleIds: string[]) {
+	function moduleIdToPath(
+		moduleId: string,
+		pkg: string,
+		packageLocation: string
+	) {
+		const path = packageLocation + moduleId.slice(pkg.length);
+		return relative(cwd, path);
+	}
+
+	if (!moduleIds) {
+		return moduleIds;
+	}
+
+	// The module ID has a glob character
+	return moduleIds.reduce(function(resolved, moduleId) {
+		const pkg = moduleId.slice(0, moduleId.indexOf('/'));
+		const packageLocation = dojoLoader.toUrl(pkg);
+		let modulePath = moduleIdToPath(moduleId, pkg, packageLocation);
+
+		// Ensure only JS files are considered
+		if (!/\.js$/.test(modulePath)) {
+			modulePath += '.js';
+		}
+
+		resolved.push(modulePath);
+
+		return resolved;
+	}, <string[]>[]);
+}
+
+function unsupportedProperty(property: string) {
+	log('unsupportedProperty', property);
 }

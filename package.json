@@ -26,9 +26,11 @@
     },
     "homepage": "https://github.com/theintern/3to4#readme",
     "dependencies": {
+        "@types/glob": "~5.0.30",
         "chalk": "~2.0.1",
         "cpx": "~1.5.0",
         "dojo": "2.0.0-alpha.7",
+        "glob": "~7.1.2",
         "wrap-ansi": "~3.0.1"
     },
     "devDependencies": {
