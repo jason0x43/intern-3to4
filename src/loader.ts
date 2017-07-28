@@ -6,11 +6,12 @@ intern.registerLoader(options => {
 		options.async = true;
 	}
 
+	intern.log('Using 3to4 loader');
+
 	return intern.loadScript('node_modules/dojo/loader.js').then(() => {
 		const require = globalObj.require;
-		intern.log('Using Dojo loader');
 
-		intern.log('Configuring Dojo loader with:', options);
+		intern.log('Configuring 3to4 loader with:', options);
 		require(options);
 
 		return (modules: string[]) => {
