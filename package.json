@@ -5,9 +5,10 @@
     "main": "compat/index.js",
     "bin": "3to4.js",
     "scripts": {
-        "build": "tsc && shx cp package.json _build/src",
+        "build": "tsc && tsc -p tests && shx cp package.json _build/src",
         "clean": "shx rm -rf _build",
-        "test": "node _build/src/convert.js tests/intern.js"
+        "test": "intern",
+        "3to4": "node _build/src/3to4.js"
     },
     "repository": {
         "type": "git",

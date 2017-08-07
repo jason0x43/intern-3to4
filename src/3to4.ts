@@ -106,10 +106,7 @@ dojoLoader(internConfig);
 		.filter(message => message.type === 'warning')
 		.map(message => message.data)
 		.forEach(message => {
-			print(
-				`[${message.time.toISOString()}] ` +
-					`${yellow('WARNING')} ${message}\n`
-			);
+			print(`${yellow('WARNING')} ${message}\n`);
 		});
 
 	messages
@@ -117,10 +114,9 @@ dojoLoader(internConfig);
 		.forEach(message => {
 			const info = <DeprecationMessage>message.data;
 			print(
-				`[${message.time.toISOString()}] ` +
-					`${yellow(
-						'WARNING'
-					)} The property '${info.property}' is deprecated. ` +
+				`${yellow(
+					'WARNING'
+				)} The property '${info.property}' is deprecated. ` +
 					`${info.message || ''}\n`
 			);
 		});
@@ -129,10 +125,9 @@ dojoLoader(internConfig);
 		.filter(message => message.type === 'unsupportedProperty')
 		.forEach(message => {
 			print(
-				`[${message.time.toISOString()}] ` +
-					`${yellow(
-						'WARNING'
-					)} The property '${message.data}' is unknown.\n`
+				`${yellow(
+					'WARNING'
+				)} The property '${message.data}' is unknown.\n`
 			);
 		});
 
@@ -141,10 +136,9 @@ dojoLoader(internConfig);
 	);
 	if (legacyReporters.length > 0) {
 		print(
-			`[${legacyReporters[0].time.toISOString()}] ` +
-				`${yellow(
-					'WARNING'
-				)} The following legacy reporters should be rewritten ` +
+			`${yellow(
+				'WARNING'
+			)} The following legacy reporters should be rewritten ` +
 				`as Intern 4 reporters and loaded loaded using the 'plugins' config property. See ` +
 				'https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
 		);
@@ -155,9 +149,7 @@ dojoLoader(internConfig);
 
 	messages.filter(message => message.type === 'error').forEach(message => {
 		const error = message.data;
-		print(
-			`[${message.time.toISOString()}] ` + `${red('ERROR')} ${error}\n`
-		);
+		print(`${red('ERROR')} ${error}\n`);
 		if (error instanceof Error && error.stack) {
 			error.stack.split('\n').slice(1).forEach(line => {
 				print(`${line}\n`);
@@ -382,7 +374,10 @@ function convert(configFile: string): PromiseLike<any> {
 			if (!loaderMap['*']) {
 				loaderMap['*'] = {};
 			}
-			loaderMap['*']['@dojo'] = relative(cwd, dirname(dirname(require.resolve('@dojo/core'))));
+			loaderMap['*']['@dojo'] = relative(
+				cwd,
+				dirname(dirname(require.resolve('@dojo/core')))
+			);
 			loaderMap['intern/interfaces'] = {
 				intern: relative(cwd, dirname(require.resolve('intern')))
 			};
@@ -441,7 +436,7 @@ function log(type: string, data: any) {
 
 function print(text: string) {
 	if (columns) {
-		text = wrapAnsi(text, columns - 10, <any>{ trim: false });
+		text = wrapAnsi(text, Math.min(80, columns - 10), <any>{ trim: false });
 	}
 	stderr.write(text);
 }
