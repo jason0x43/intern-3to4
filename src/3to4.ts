@@ -3,7 +3,7 @@
 import { createWriteStream } from 'fs';
 import { red, yellow } from 'chalk';
 import * as wrapAnsi from 'wrap-ansi';
-import { basename, dirname, relative } from 'path';
+import { basename, dirname, join, relative } from 'path';
 import * as loader from 'dojo/loader';
 
 const args = process.argv.slice(2);
@@ -20,19 +20,25 @@ const messages: Message[] = [];
 const dojoLoader: loader.IRequire = <any>loader;
 const internConfig = {
 	baseUrl: cwd.replace(/\\/g, '/'),
-	packages: [{ name: 'intern', location: 'node_modules/intern' }],
+	packages: [
+		{
+			name: 'intern',
+			location: join(__dirname, 'compat'),
+			main: 'index.js'
+		}
+	],
 	map: {
 		intern: {
-			dojo: 'intern/browser_modules/dojo',
-			chai: 'intern/browser_modules/chai/chai',
-			diff: 'intern/browser_modules/diff/diff',
+			dojo: 'node_modules/dojo',
+			chai: 'node_modules/chai/chai',
+			diff: 'node_modules/diff/diff',
 			// benchmark requires lodash and platform
-			benchmark: 'intern/browser_modules/benchmark/benchmark',
-			lodash: 'intern/browser_modules/lodash-amd/main',
-			platform: 'intern/browser_modules/platform/platform'
+			benchmark: 'node_modules/benchmark/benchmark',
+			lodash: 'node_modules/lodash-amd/main',
+			platform: 'node_modules/platform/platform'
 		},
 		'*': {
-			'intern/dojo': 'intern/browser_modules/dojo'
+			'intern/dojo': 'node_modules/dojo'
 		}
 	}
 };
@@ -95,6 +101,7 @@ dojoLoader(internConfig);
 
 (async () => {
 	try {
+		await updateIntern({ mode: 'runner' });
 		const config = await convert(args[0]);
 		const configString = JSON.stringify(config, null, '    ');
 		stdout.write(`${configString}\n`);
@@ -474,4 +481,15 @@ function resolveModuleIds(moduleIds: string[]) {
 
 function unsupportedProperty(property: string) {
 	log('unsupportedProperty', property);
+}
+
+function updateIntern(options: any) {
+	return new Promise(resolve => {
+		dojoLoader([ 'intern' ], intern => {
+			Object.keys(options).forEach(key => {
+				intern[key] = options[key];
+			});
+			resolve();
+		});
+	});
 }
