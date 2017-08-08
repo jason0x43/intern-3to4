@@ -1,5 +1,34 @@
 // tslint:disable:interface-name
+
+declare module 'dojo/has' {
+	import loader = require('dojo/loader');
+	namespace has {
+		interface IHas {
+			(name: string): any;
+			add(
+				name: string,
+				value: (
+					global: Window,
+					document?: HTMLDocument,
+					element?: HTMLDivElement
+				) => any,
+				now?: boolean,
+				force?: boolean
+			): void;
+			add(name: string, value: any, now?: boolean, force?: boolean): void;
+		}
+	}
+
+	// tslint:disable:class-name
+	interface has extends has.IHas, loader.ILoaderPlugin {}
+
+	const has: has;
+	export = has;
+}
+
 declare module 'dojo/loader' {
+	import has = require('dojo/has');
+
 	export interface IConfig {
 		baseUrl?: string;
 		map?: IModuleMap;
@@ -96,6 +125,14 @@ declare module 'dojo/loader' {
 		<ModuleType>(moduleId: string): ModuleType;
 		toAbsMid(moduleId: string): string;
 		toUrl(path: string): string;
+	}
+	export interface IRootRequire extends IRequire {
+		config(config: IConfig): void;
+	    has: has;
+		inspect?(name: string): any;
+		nodeRequire?(id: string): any;
+		signal(type: string, data: any[]): void;
+		undef(moduleId: string): void;
 	}
 	export interface IRequireCallback {
 		(...modules: any[]): void;

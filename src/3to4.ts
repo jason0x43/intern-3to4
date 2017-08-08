@@ -5,6 +5,7 @@ import { red, yellow } from 'chalk';
 import * as wrapAnsi from 'wrap-ansi';
 import { basename, dirname, join, relative } from 'path';
 import * as loader from 'dojo/loader';
+const Intern = require('./compat/index');
 
 const args = process.argv.slice(2);
 
@@ -17,7 +18,7 @@ if (args.length < 1) {
 
 const cwd = process.cwd();
 const messages: Message[] = [];
-const dojoLoader: loader.IRequire = <any>loader;
+const dojoLoader: loader.IRootRequire = <any>loader;
 const internConfig = {
 	baseUrl: cwd.replace(/\\/g, '/'),
 	packages: [
@@ -90,6 +91,7 @@ if (args.length > 1) {
 	stdout = createWriteStream(args[1], { flags: 'w' });
 }
 
+let logDisabled = false;
 let stderr: NodeJS.WritableStream = process.stderr;
 let columns = (<any>process.stderr).columns;
 if (args.length > 2) {
@@ -101,10 +103,32 @@ dojoLoader(internConfig);
 
 (async () => {
 	try {
-		await updateIntern({ mode: 'runner' });
-		const config = await convert(args[0]);
+		const intern = await dojoLoad<typeof Intern>('intern');
+		intern.mode = 'runner';
+		const mid = dojoLoader.toAbsMid(args[0]);
+		const config = await convert(mid);
 		const configString = JSON.stringify(config, null, '    ');
 		stdout.write(`${configString}\n`);
+
+		const accessed = intern.accessed;
+		if (accessed.mode) {
+			log(
+				'warning',
+				`The config is using 'mode' from Intern main module. If this is ` +
+				`being used for environment-specific, please see the following ` +
+				`page for alternatives: ` +
+				`https://github.com/theintern/intern/blob/master/docs/configuration.md#environment-specific-config`
+			);
+		}
+
+		['args', 'mode', 'executor'].forEach(key => {
+			if (accessed[key]) {
+				log(
+					'warning',
+					`Config is using '${key}' from Intern main module.`
+				);
+			}
+		});
 	} catch (error) {
 		log('error', error);
 	}
@@ -229,7 +253,10 @@ function convertReporterName(name: string) {
 	return reporter;
 }
 
-function convert(configFile: string): PromiseLike<any> {
+function convert(configFile: string, disableLog?: boolean): PromiseLike<any> {
+	const originalLogDisabled = logDisabled;
+	logDisabled = disableLog || false;
+
 	return new Promise(resolve => {
 		dojoLoader([configFile], async function(oldConfig) {
 			const newConfig: { [key: string]: any } = {
@@ -406,7 +433,15 @@ function convert(configFile: string): PromiseLike<any> {
 
 			resolve(newConfig);
 		});
-	});
+	})
+		.then(config => {
+			logDisabled = originalLogDisabled;
+			return config;
+		})
+		.catch(error => {
+			logDisabled = originalLogDisabled;
+			throw error;
+		});
 }
 
 function addPackage(
@@ -438,7 +473,9 @@ function legacyReporter(reporter: string) {
 }
 
 function log(type: string, data: any) {
-	messages.push({ time: new Date(), type, data });
+	if (!logDisabled) {
+		messages.push({ time: new Date(), type, data });
+	}
 }
 
 function print(text: string) {
@@ -483,13 +520,10 @@ function unsupportedProperty(property: string) {
 	log('unsupportedProperty', property);
 }
 
-function updateIntern(options: any) {
-	return new Promise(resolve => {
-		dojoLoader([ 'intern' ], intern => {
-			Object.keys(options).forEach(key => {
-				intern[key] = options[key];
-			});
-			resolve();
+function dojoLoad<V>(mid: string): Promise<V> {
+	return new Promise<V>(resolve => {
+		dojoLoader([mid], mod => {
+			resolve(mod);
 		});
 	});
 }
