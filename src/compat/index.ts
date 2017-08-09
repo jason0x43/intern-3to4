@@ -8,7 +8,8 @@ import { AmdRequire, RequireCallback } from './types';
 let args: any = null;
 let executor: Executor | null = null;
 let mode = 'runner';
-let accessed: { [key: string]: any } = {};
+
+const accessed: { [key: string]: any } = {};
 
 export = {
 	get args() {
@@ -35,30 +36,23 @@ export = {
 		mode = value;
 	},
 
-	get accessed() {
-		return accessed;
+	get accessed(): { [key: string]: any; } {
+		return Object.create(accessed);
 	},
 
-	load: load,
-	normalize: normalize
+	load(id: string, _parentRequire: (mids: string[], callback: RequireCallback) => {}, callback: RequireCallback) {
+		require([`./interfaces/${id}`], iface => {
+			if (iface.default) {
+				callback(iface.default);
+			} else {
+				callback(iface);
+			}
+		});
+	},
+
+	normalize(interfaceId: string) {
+		return interfaceId;
+	}
 };
-
-function load(
-	id: string,
-	_parentRequire: (mids: string[], callback: RequireCallback) => {},
-	callback: RequireCallback
-) {
-	require(['./interfaces/' + id], iface => {
-		if (iface.default) {
-			callback(iface.default);
-		} else {
-			callback(iface);
-		}
-	});
-}
-
-function normalize(interfaceId: string) {
-	return interfaceId;
-}
 
 declare var require: AmdRequire;

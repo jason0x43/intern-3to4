@@ -1,46 +1,56 @@
 {
-    "name": "3to4",
-    "version": "1.0.0",
-    "description": "Migrate Intern 3 projects to Intern 4",
-    "main": "compat/index.js",
-    "bin": "3to4.js",
-    "scripts": {
-        "build": "tsc && tsc -p tests && shx cp package.json _build/src",
-        "clean": "shx rm -rf _build",
-        "test": "intern",
-        "3to4": "node _build/src/3to4.js"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/theintern/3to4.git"
-    },
-    "keywords": [
-        "intern",
-        "javascript",
-        "testing",
-        "typescript"
-    ],
-    "author": "",
-    "license": "BSD-3-Clause",
-    "bugs": {
-        "url": "https://github.com/theintern/3to4/issues"
-    },
-    "homepage": "https://github.com/theintern/3to4#readme",
-    "dependencies": {
-        "@types/glob": "~5.0.30",
-        "chalk": "~2.0.1",
-        "cpx": "~1.5.0",
-        "dojo": "2.0.0-alpha.7",
-        "glob": "~7.1.2",
-        "wrap-ansi": "~3.0.1"
-    },
-    "devDependencies": {
-        "@types/chalk": "~0.4.31",
-        "@types/wrap-ansi": "~2.0.14",
-        "intern": "~4.0.0-alpha.12",
-        "shx": "~0.2.2"
-    },
-    "peerDependency": {
-        "intern": "~4.0.0-alpha.12"
-    }
+	"name": "3to4",
+	"version": "1.0.0",
+	"description": "Migrate Intern 3 projects to Intern 4",
+	"main": "compat/index.js",
+	"bin": "3to4.js",
+	"scripts": {
+		"build": "intern-dev-clean && intern-dev-build",
+		"clean": "intern-dev-clean",
+		"lint": "intern-dev-lint",
+		"test": "NODE_PATH=_build intern",
+		"3to4": "node _build/src/3to4.js",
+		"watch": "intern-dev-build watch"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/theintern/3to4.git"
+	},
+	"keywords": [
+		"intern",
+		"javascript",
+		"testing",
+		"typescript"
+	],
+	"author": "",
+	"license": "BSD-3-Clause",
+	"bugs": {
+		"url": "https://github.com/theintern/3to4/issues"
+	},
+	"homepage": "https://github.com/theintern/3to4#readme",
+	"dependencies": {
+		"@types/glob": "~5.0.30",
+		"chalk": "~2.0.1",
+		"cpx": "~1.5.0",
+		"dojo": "2.0.0-alpha.7",
+		"glob": "~7.1.2",
+		"wrap-ansi": "~3.0.1"
+	},
+	"devDependencies": {
+		"@theintern/dev": "~0.4.3",
+		"@types/chalk": "~0.4.31",
+		"@types/wrap-ansi": "~2.0.14",
+		"intern": "~4.0.0-alpha.12",
+		"shx": "~0.2.2"
+	},
+	"peerDependency": {
+		"intern": "~4.0.0-alpha.12"
+	},
+	"internDev": {
+		"resources": {
+			"_build": [
+				"tests/**/*.js"
+			]
+		}
+	}
 }

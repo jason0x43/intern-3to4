@@ -43,6 +43,7 @@ const internConfig = {
 		}
 	}
 };
+
 const reporters: { [name: string]: string } = {
 	Benchmark: 'benchmark',
 	Cobertura: 'cobertura',
@@ -57,6 +58,7 @@ const reporters: { [name: string]: string } = {
 	TeamCity: 'teamcity',
 	WebDriver: 'dom'
 };
+
 const converters: { [key: string]: (value: any) => any } = {
 	excludeInstrumentation(value: any) {
 		if (value instanceof RegExp) {

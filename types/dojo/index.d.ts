@@ -128,7 +128,7 @@ declare module 'dojo/loader' {
 	}
 	export interface IRootRequire extends IRequire {
 		config(config: IConfig): void;
-	    has: has;
+		has: has;
 		inspect?(name: string): any;
 		nodeRequire?(id: string): any;
 		signal(type: string, data: any[]): void;
