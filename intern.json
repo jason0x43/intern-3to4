@@ -1,5 +1,15 @@
 {
 	"suites": [
 		"_build/tests/unit/**/*.js"
-	]
+	],
+	"plugins": "_build/tests/support/MockNodeModule.js",
+
+	"configs": {
+		"coverage": {
+			"description": "Generate full coverage",
+			"coverage": [
+				"_build/src/**/*.js"
+			]
+		}
+	}
 }

@@ -44,9 +44,9 @@ define([ 'intern' ], function (intern) {
 		}
 	};
 
-	if (intern.mode === 'runner') {
+	/*if (intern.mode === 'runner') {
 		config.reporters = [ 'Runner', 'Lcovhtml' ];
-	}
+	}*/
 
 	return config;
 });
