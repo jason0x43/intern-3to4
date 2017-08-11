@@ -18,6 +18,25 @@ export default abstract class BaseMockModule<T> {
 		this.sandbox.reset();
 	}
 
+	resetHistory(): void {
+		this.sandbox.resetHistory();
+	}
+
+	spy(): sinon.SinonSpy;
+	spy(func: Function): sinon.SinonSpy;
+	spy<T>(obj: T, method: keyof T): sinon.SinonSpy;
+	spy(...args: any[]): sinon.SinonSpy {
+		return this.sandbox.spy(...args);
+	}
+
+	stub(): sinon.SinonStub;
+	stub(obj: any): sinon.SinonStub;
+	stub<T>(obj: T, method: keyof T): sinon.SinonStub;
+	stub<T>(obj: T, method: keyof T, func: Function): sinon.SinonStub;
+	stub(...args: any[]): sinon.SinonStub {
+		return this.sandbox.stub(...args);
+	}
+
 	mockDependencies(mocks: { [name: string]: any; } = {}) {
 		Object.keys(mocks).forEach(name => {
 			const mock = mocks[name];

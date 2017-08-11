@@ -43,22 +43,33 @@ suite('convert', () => {
 	let module: typeof _convert;
 	let convert: typeof _convert.default;
 
-	const sandbox = sinon.sandbox.create();
-
-	const mockDojoLoad = {
-		default: assign(sandbox.stub(), {
-			config: sandbox.stub(),
-			toUrl: sandbox.stub()
-		})
+	let mockDojoLoad: {
+		default: sinon.SinonStub & {
+			config: sinon.SinonStub;
+			toUrl: sinon.SinonStub;
+		};
 	};
 
-	const mockLog = {
-		default: sandbox.stub(),
-		disabled: sandbox.stub()
+	let mockLog: {
+		default: sinon.SinonStub;
+		disabled: sinon.SinonStub;
 	};
 
 	before(async () => {
 		mock = new MockModule('src/convert', require);
+
+		mockDojoLoad = {
+			default: assign(mock.stub(), {
+				config: mock.stub(),
+				toUrl: mock.stub()
+			})
+		};
+
+		mockLog = {
+			default: mock.stub(),
+			disabled: mock.stub()
+		};
+
 		mock.mockDependencies({
 			'src/dojoLoad': mockDojoLoad,
 			'path': path,
@@ -74,13 +85,12 @@ suite('convert', () => {
 	});
 
 	afterEach(() => {
-		sandbox.reset();
 		mock.reset();
 	});
 
 	after(() => {
-		sandbox.restore();
 		mock.destroy();
+		mockDojoLoad = mockLog = null as any;
 	});
 
 	test('blank config', async () => {
