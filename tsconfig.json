@@ -1,22 +1,14 @@
 {
+	"extends": "./node_modules/@theintern/dev/tsconfig-base.json",
 	"compilerOptions": {
-		"allowSyntheticDefaultImports": true,
-		"declaration": false,
-		"experimentalDecorators": true,
 		"module": "umd",
-		"moduleResolution": "node",
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"outDir": "./_build",
-		"preserveConstEnums": true,
-		"removeComments": false,
 		"rootDir": ".",
-		"sourceMap": true,
-		"strict": true,
+		"declaration": false,
+		"removeComments": false,
 		"target": "es2015",
 		"typeRoots": [
 			"node_modules/@types",
-			"node_modules/intern/types",
 			"types"
 		],
 		"types": [

@@ -70,7 +70,7 @@ export default async function convert(configFile: string, cwd: string, disableLo
 				case 'excludeInstrumentation':
 					log('deprecated', {
 						property,
-						message: `Please update your config to use the 'coverage' ` +
+						message: "Please update your config to use the 'coverage' " +
 							'property. See ' +
 							'https://github.com/theintern/intern/blob/master/docs/configuration.md#coverage.'
 					});
@@ -83,7 +83,7 @@ export default async function convert(configFile: string, cwd: string, disableLo
 						property,
 						message: `Please add the 'before' callback to a '${property}Run' ` +
 							'hook in a plugin and add the plugin to the ' +
-							`'plugins' property in the generated config. See ` +
+							"'plugins' property in the generated config. See " +
 							'https://github.com/theintern/intern/blob/master/docs/how_to.md#run-code-before-tests-start.'
 					});
 					newConfig.plugins = newConfig.plugins || [];

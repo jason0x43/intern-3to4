@@ -74,10 +74,10 @@ dojoLoader(internConfig);
 		if (accessed.mode) {
 			log(
 				'warning',
-				`The config is using 'mode' from Intern main module. If this is ` +
-				`being used for environment-specific, please see the following ` +
-				`page for alternatives: ` +
-				`https://github.com/theintern/intern/blob/master/docs/configuration.md#environment-specific-config`
+				"The config is using 'mode' from Intern main module. If this is " +
+				'being used for environment-specific, please see the following ' +
+				'page for alternatives: ' +
+				'https://github.com/theintern/intern/blob/master/docs/configuration.md#environment-specific-config'
 			);
 		}
 
@@ -119,7 +119,7 @@ dojoLoader(internConfig);
 			`${yellow(
 				'WARNING'
 			)} The following legacy reporters should be rewritten ` +
-				`as Intern 4 reporters and loaded using the 'plugins' config property. See ` +
+				"as Intern 4 reporters and loaded using the 'plugins' config property. See " +
 				'https://github.com/theintern/intern/blob/master/docs/extending.md#reporters.\n'
 		);
 

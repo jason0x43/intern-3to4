@@ -8,7 +8,6 @@ import { AmdRequire, RequireCallback } from './types';
 let args: any = null;
 let executor: Executor | null = null;
 let mode = 'runner';
-
 const accessed: { [key: string]: any } = {};
 
 export = {
