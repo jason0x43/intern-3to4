@@ -16,6 +16,7 @@ export interface OldSuiteFactory {
 export interface BenchmarkInterface {
 	(descriptor: OldObjectSuiteDescriptor | OldSuiteFactory): void;
 	async: typeof BenchmarkTest.async;
+	skip: (testFunc: Function) => ((test: BenchmarkTest) => void);
 }
 
 const benchmark: BenchmarkInterface = function benchmark(descriptor: OldSuiteDescriptor | OldSuiteFactory) {
@@ -29,5 +30,10 @@ const benchmark: BenchmarkInterface = function benchmark(descriptor: OldSuiteDes
 } as any;
 
 benchmark.async = BenchmarkTest.async;
+benchmark.skip = (_testFunc: Function) => {
+	return (test: BenchmarkTest) => {
+		test.skip();
+	};
+};
 
 export default benchmark;

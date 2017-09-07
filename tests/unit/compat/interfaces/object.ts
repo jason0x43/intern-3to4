@@ -70,11 +70,29 @@ suite('compat/interfaces/object', () => {
 		assert.isTrue(mockObject.default.calledWith(name, matcher));
 	}
 
+	test('property handler', () => {
+		const original = {
+			name: 'foo',
+			beforeEach() {},
+			testFunc() {}
+		};
+
+		const handler = sinon.stub().returns(true);
+
+		registerSuite(original, undefined, handler);
+
+		baseAssertCall('foo', sinon.match.object);
+		assert.deepEqual(mockObject.default.firstCall.args[1], {
+			tests: {}
+		});
+		assert.isTrue(handler.calledTwice);
+	});
+
 	addTests('object argument', (object) => registerSuite(object), (name, descriptor) => {
 		baseAssertCall(name, sinon.match.object);
 		assert.deepEqual(mockObject.default.firstCall.args[1], descriptor);
 	});
-	addTests('funciton argument', (object) => registerSuite(() => object), (name, descriptor) => {
+	addTests('function argument', (object) => registerSuite(() => object), (name, descriptor) => {
 		baseAssertCall(name, sinon.match.func);
 		assert.deepEqual(mockObject.default.firstCall.args[1](), descriptor);
 	});

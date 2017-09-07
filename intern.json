@@ -9,7 +9,8 @@
 			"description": "Generate full coverage",
 			"coverage": [
 				"_build/src/**/*.js"
-			]
+			],
+			"reporters+": [ "htmlcoverage" ]
 		}
 	}
 }
