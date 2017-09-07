@@ -41,7 +41,7 @@
 		"wrap-ansi": "~3.0.1"
 	},
 	"devDependencies": {
-		"@theintern/dev": "~0.5.7",
+		"@theintern/dev": "~0.5.8",
 		"@types/chalk": "~0.4.31",
 		"@types/mockery": "~1.4.29",
 		"@types/sinon": "~2.3.3",
