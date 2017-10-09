@@ -61,7 +61,14 @@ if (args.length > 2) {
 
 dojoLoader(internConfig);
 
-(async () => {
+function print(text: string) {
+	if (columns) {
+		text = wrapAnsi(text, Math.min(80, columns - 10), <any>{ trim: false });
+	}
+	stderr.write(text);
+}
+
+async function main () {
 	try {
 		const intern = await dojoLoad<typeof Intern>('intern');
 		intern.mode = 'runner';
@@ -144,11 +151,6 @@ dojoLoader(internConfig);
 	if (stderr !== process.stderr) {
 		stderr.end();
 	}
-})();
-
-function print(text: string) {
-	if (columns) {
-		text = wrapAnsi(text, Math.min(80, columns - 10), <any>{ trim: false });
-	}
-	stderr.write(text);
 }
+
+main();

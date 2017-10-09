@@ -4,6 +4,10 @@
 	],
 	"plugins": "_build/tests/support/MockNodeModule.js",
 
+	"environments": [
+		{ "browser": "node" }
+	],
+
 	"configs": {
 		"coverage": {
 			"description": "Generate full coverage",

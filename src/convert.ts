@@ -1,7 +1,18 @@
 import dojoLoad from './dojoLoad';
 import { basename, dirname, relative } from 'path';
+import { deepMixin } from '@dojo/core/lang';
 
 import log, { disabled } from './log';
+
+function addLoaderConfig(newConfig: { [key: string]: any; }, value: string, type: 'browser' | 'node') {
+	newConfig[type] = newConfig[type] || {};
+	newConfig[type].loader = {
+		script: newConfig.loader.script,
+		options: {
+			_originalLoader: value
+		}
+	};
+}
 
 export default async function convert(configFile: string, cwd: string, disableLog = false): Promise<any> {
 	const originalLogDisabled = disabled();
@@ -104,17 +115,11 @@ export default async function convert(configFile: string, cwd: string, disableLo
 				case 'loaders':
 					if (value['host-browser']) {
 						loaders.browser = value;
-						newConfig.browser = newConfig.browser || {};
-						newConfig.browser.loader = {
-							script: value
-						};
+						addLoaderConfig(newConfig, value['host-browser'], 'browser');
 					}
 					if (value['host-node']) {
 						loaders.node = value;
-						newConfig.node = newConfig.node || {};
-						newConfig.node.loader = {
-							script: value
-						};
+						addLoaderConfig(newConfig, value['host-node'], 'node');
 					}
 					break;
 
@@ -197,8 +202,7 @@ export default async function convert(configFile: string, cwd: string, disableLo
 					.filter(env => loaders[env])
 					.forEach(env => {
 						newConfig[env] = newConfig[env] || {};
-						newConfig[env].loader.options =
-							newConfig.loader.options;
+						deepMixin(newConfig[env].loader.options, newConfig.loader.options);
 					});
 			}
 		}

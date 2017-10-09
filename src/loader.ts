@@ -8,7 +8,7 @@ intern.registerLoader(options => {
 
 	intern.log('Using 3to4 loader');
 
-	return intern.loadScript('node_modules/dojo/loader.js').then(() => {
+	return intern.loadScript(options._originalLoader || 'node_modules/dojo/loader.js').then(() => {
 		const require = globalObj.require;
 
 		intern.log('Configuring 3to4 loader with:', options);

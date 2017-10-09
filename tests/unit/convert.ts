@@ -8,7 +8,7 @@ const MockModule = intern.getPlugin('mocking');
 import * as sinon from 'sinon';
 import * as path from 'path';
 
-import { assign, deepAssign } from '@dojo/core/lang';
+import { assign, deepAssign, deepMixin } from '@dojo/core/lang';
 
 const defaultConfig = {
 	loader: {
@@ -73,7 +73,10 @@ suite('convert', () => {
 		mock.mockDependencies({
 			'src/dojoLoad': mockDojoLoad,
 			'path': path,
-			'src/log': mockLog
+			'src/log': mockLog,
+			'@dojo/core/lang': {
+				deepMixin
+			}
 		});
 
 		module = await mock.getModuleUnderTest();
@@ -143,20 +146,34 @@ suite('convert', () => {
 			defaultTimeout: 6,
 			environments: 7,
 			filterErrorStack: 8,
-			functionalSuites: [ '9' ],
-			grep: /abc/,
 			maxConcurrency: 11,
-			suites: [ '12', '13.js' ],
 			tunnel: '14'
 		};
 		mockDojoLoad.default.resolves(properties);
 		mockDojoLoad.default.toUrl.returnsArg(0);
 		const result = await convert('foo/bar', '.');
 
-		const expected = deepAssign({}, defaultConfig, properties, {
+		const expected = deepAssign({}, defaultConfig, properties);
+
+		assert.deepEqual(result, expected);
+	});
+
+	test('converted properties', async () => {
+		const properties = {
+			functionalSuites: [ '9', '16/*.js', '17/**/*' ],
+			grep: /abc/,
+			suites: [ '12', '13.js', '15/**/*' ],
+			tunnel: 'SauceLabsTunnel'
+		};
+		mockDojoLoad.default.resolves(properties);
+		mockDojoLoad.default.toUrl.returnsArg(0);
+		const result = await convert('foo/bar', '.');
+
+		const expected = deepAssign({}, defaultConfig, {
 			grep: 'abc',
-			functionalSuites: [ '9.js' ],
-			suites: [ '12.js', '13.js' ]
+			functionalSuites: [ '9.js', '16/*.js', '17/**/*.js' ],
+			suites: [ '12.js', '13.js', '15/**/*.js' ],
+			tunnel: 'saucelabs'
 		});
 
 		assert.deepEqual(result, expected);
@@ -184,6 +201,56 @@ suite('convert', () => {
 				coverageVariable: '__foo_bar_baz__'
 			}
 		}));
+	});
+
+	suite('loaders', () => {
+		test('browser', async () => {
+			const properties = {
+				loaders: {
+					'host-browser': 'node_modules/requirejs/require.js'
+				}
+			};
+			mockDojoLoad.default.resolves(properties);
+			mockDojoLoad.default.toUrl.returnsArg(0);
+			const result = await convert('foo/bar', '.');
+
+			const expected = deepAssign({}, defaultConfig, {
+				browser: {
+					loader: {
+						script: 'node_modules/3to4/loader.js',
+						options: deepAssign({
+							_originalLoader: 'node_modules/requirejs/require.js'
+						}, defaultConfig.loader.options)
+					}
+				}
+			});
+
+			assert.deepEqual(result, expected);
+		});
+
+		test ('node', async () => {
+			const properties = {
+				loaders: {
+					'host-node': 'requirejs'
+				}
+			};
+			mockDojoLoad.default.resolves(properties);
+			mockDojoLoad.default.toUrl.returnsArg(0);
+			const result = await convert('foo/bar', '.');
+
+			const expected = deepAssign({}, defaultConfig, {
+				node: {
+					loader: {
+						script: 'node_modules/3to4/loader.js',
+						options: deepAssign({
+							_originalLoader: 'requirejs'
+						}, defaultConfig.loader.options)
+					}
+				}
+			});
+
+			assert.deepEqual(result, expected);
+		});
 	});
 
 	test('proxy settings', async () => {
