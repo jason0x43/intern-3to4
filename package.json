@@ -29,10 +29,7 @@
 	},
 	"homepage": "https://github.com/theintern/3to4#readme",
 	"dependencies": {
-		"@dojo/core": "~2.0.0-beta2.4",
-		"@dojo/has": "~2.0.0-beta2.3",
-		"@dojo/interfaces": "~2.0.0-beta2.4",
-		"@dojo/shim": "~2.0.0-beta2.4",
+		"@dojo/loader": "~0.1.0",
 		"@types/glob": "~5.0.30",
 		"chalk": "~2.1.0",
 		"cpx": "~1.5.0",
@@ -41,12 +38,16 @@
 		"wrap-ansi": "~3.0.1"
 	},
 	"devDependencies": {
+		"@dojo/core": "~2.0.0-beta2.4",
+		"@dojo/has": "~2.0.0-beta2.3",
+		"@dojo/interfaces": "~2.0.0-beta2.4",
+		"@dojo/shim": "~2.0.0-beta2.4",
 		"@theintern/dev": "~0.5.8",
 		"@types/chalk": "~0.4.31",
 		"@types/mockery": "~1.4.29",
 		"@types/sinon": "~2.3.3",
 		"@types/wrap-ansi": "~2.0.14",
-		"intern": "~4.0.0-alpha.15",
+		"intern": "~4.0.0-rc.1",
 		"mockery": "~2.1.0",
 		"shx": "~0.2.2",
 		"sinon": "~3.2.0"
@@ -56,7 +57,7 @@
 		"@dojo/has": "~2.0.0-beta2.3",
 		"@dojo/interfaces": "~2.0.0-beta2.4",
 		"@dojo/shim": "~2.0.0-beta2.4",
-		"intern": "~4.0.0-alpha.15"
+		"intern": "~4.0.0-rc.1"
 	},
 	"internDev": {
 		"resources": {
